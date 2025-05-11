@@ -1,10 +1,9 @@
 {
   "plantuml": {
-    "command": "wsl.exe",
+    "command": "npx",
     "args": [
-      "bash",
-      "-c",
-      "\"cd /home/nitr0gen/augment-code-mcp/plantuml-mcp/config && ./run-plantuml-mcp.sh\""
+      "-y",
+      "@brainstack/plantuml-mcp"
     ],
     "stdio": true
   }

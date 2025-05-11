@@ -17,11 +17,11 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
 # Load environment variables from .env file
-if [ -f "$REPO_ROOT/.env" ]; then
+if [ -f "$SCRIPT_DIR/.env" ]; then
   echo "Loading environment variables from .env file"
-  export $(grep -v "^#" "$REPO_ROOT/.env" | xargs)
+  export $(grep -v "^#" "$SCRIPT_DIR/.env" | xargs)
 else
-  echo "Error: .env file not found in repository root"
+  echo "Error: .env file not found in $SCRIPT_DIR"
   exit 1
 fi
 

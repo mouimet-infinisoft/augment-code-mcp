@@ -1,0 +1,76 @@
+{
+  "name": "@brainstack/plantuml-mcp",
+  "version": "1.0.0",
+  "description": "PlantUML Model Context Protocol (MCP) server for generating UML diagrams",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run verify && npm run build",
+    "verify": "npm run lint && npm run test",
+    "release:patch": "npm run verify && npm version patch && git push && git push --tags && npm publish",
+    "release:minor": "npm run verify && npm version minor && git push && git push --tags && npm publish",
+    "release:major": "npm run verify && npm version major && git push && git push --tags && npm publish",
+    "preversion": "npm run verify && git diff-index --quiet HEAD -- || (echo 'Working directory not clean, please commit or stash changes first' && exit 1)"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mouimet-infinisoft/augment-code-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mouimet-infinisoft/augment-code-mcp/issues"
+  },
+  "homepage": "https://github.com/mouimet-infinisoft/augment-code-mcp/tree/master/plantuml-mcp#readme",
+  "keywords": [
+    "mcp",
+    "plantuml",
+    "diagram",
+    "uml",
+    "sequence-diagram",
+    "class-diagram",
+    "activity-diagram",
+    "entity-relationship-diagram",
+    "augment-code",
+    "model-context-protocol"
+  ],
+  "author": "Martin Ouimet <mouimet@infinisoft.world>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "@brainstack/diagram": "^1.0.29",
+    "@modelcontextprotocol/sdk": "^1.11.1",
+    "dotenv": "^16.0.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
+    "eslint": "^8.37.0",
+    "jest": "^29.5.0",
+    "rimraf": "^4.4.1",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": ">=1.11.0"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "postgrest": {
+    "command": "wsl.exe",
+    "args": [
+      "bash",
+      "-c",
+      "\"cd /home/nitr0gen/augment-code-mcp/postgrest-mcp && ./run-postgrest-mcp.sh\""
+    ]
+  }
+}

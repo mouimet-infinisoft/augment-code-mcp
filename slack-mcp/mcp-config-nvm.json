@@ -1,0 +1,10 @@
+{
+  "slack": {
+    "command": "wsl.exe",
+    "args": [
+      "bash",
+      "-c",
+      "\"cd /home/nitr0gen/augment-code-mcp/slack-mcp && ./run-slack-nvm.sh\""
+    ]
+  }
+}

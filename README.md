@@ -1,188 +1,62 @@
 # Augment Code MCP (Model Context Protocol)
 
-This repository contains the Model Context Protocol (MCP) implementation for Augment Code, enabling seamless integration with various external services.
+This repository contains ready-to-use Model Context Protocol (MCP) configurations and implementations that work with any MCP-compatible system, including the Augment Code VSCode extension.
 
 ## What is MCP?
 
-The Model Context Protocol (MCP) is a core component of Augment Code that facilitates communication between AI models and external services. It provides a standardized way to:
+The Model Context Protocol (MCP) is a standardized way for AI assistants to interact with external tools and services:
 
-- Access external data sources
-- Interact with third-party platforms
-- Execute actions in connected systems
-- Retrieve contextual information for AI processing
+- Generate diagrams and visualizations
+- Access messaging platforms like Slack
+- Query databases and APIs
+- Execute specialized functions
 
-## Supported Integrations
+## Supported MCPs
 
-### Custom MCP Servers (Published on npm)
-- **PlantUML MCP** (`@brainstack/plantuml-mcp`): A complete, published MCP server that allows AI assistants to generate UML diagrams with automatic branding
+- **PlantUML MCP** (`@brainstack/plantuml-mcp`): Generate professional UML diagrams with automatic branding
+- **Slack MCP**: Interact with Slack workspaces, channels, and messages
+- **PostgREST MCP**: Access PostgreSQL databases through a RESTful API
 
-### MCP Configurations (In Development)
-- **Slack MCP**: Enables AI assistants to interact with Slack workspaces, channels, and messages
-- **PostgREST MCP**: Provides database access through a RESTful API
-- Additional integrations are being developed
+## Quick Start
 
-## How to Use
+1. **Install VSCode and Augment Code Extension**
+2. **Choose an MCP**:
+   - Use PlantUML MCP: `npm install @brainstack/plantuml-mcp`
+   - Or use the configuration files in this repository
+3. **Run the MCP server** using the provided scripts
+4. **Configure Augment Code** to connect to your MCP
 
-### Setup Requirements
-- **VSCode**: This implementation is optimized for Visual Studio Code
-- **Augment Code Extension**: Install the Augment Code extension in VSCode
-- **WSL 2**: Running in Windows Subsystem for Linux 2 environment
-
-### Installation Options
-
-#### Option 1: Using Published npm Package (Recommended for PlantUML MCP)
-1. Install the published package:
-   ```bash
-   npm install @brainstack/plantuml-mcp
-   ```
-
-2. Create a script to run the server:
-   ```javascript
-   const { createServer, startServer } = require('@brainstack/plantuml-mcp');
-   const server = createServer();
-   startServer(server);
-   ```
-
-#### Option 2: Using This Repository
-1. Clone this repository to your local environment
-2. Navigate to the specific MCP directory you want to use
-3. Follow the setup instructions in the MCP-specific README
-
-### Running the PlantUML MCP Server
-
-#### Method 1: Using the npm Package (Recommended)
-1. Install the package:
-   ```bash
-   npm install @brainstack/plantuml-mcp
-   ```
-
-2. Run using the provided scripts or create your own implementation
-
-#### Method 2: Using This Repository
-1. Navigate to the PlantUML MCP directory:
-   ```bash
-   cd plantuml-mcp
-   ```
-
-2. Make the run script executable:
-   ```bash
-   chmod +x config/run-plantuml-mcp.sh
-   ```
-
-3. Run the MCP server:
-   ```bash
-   ./config/run-plantuml-mcp.sh
-   ```
-
-4. For WSL 2 users, use the WSL-specific configuration:
-   ```bash
-   cp config/mcp-config-plantuml-wsl.json config/mcp-config-plantuml.json
-   ```
-
-### Running the Slack MCP (In Development)
-1. Navigate to the Slack MCP directory:
-   ```bash
-   cd slack-mcp
-   ```
-
-2. Configure your Slack credentials in the `.env` file
-3. Run the MCP server using the provided script
-
-### Integration with Augment Code
-1. Open VSCode with the Augment Code extension installed
-2. Configure the extension to use your local MCP implementation
-3. Verify the connection between Augment Code and your MCP services
-4. Test the integration by executing commands through the Augment Code interface
-
-### Troubleshooting
-- Ensure all paths in the configuration are correct for your WSL 2 environment
-- Check that environment variables are properly set in your `.env` file
-- Verify network connectivity for external service APIs
-- Review logs for any connection or authentication errors
-
-## Architecture
-
-The MCP serves as a middleware layer between Augment Code's AI capabilities and external services. It:
-
-1. Translates requests from the AI into service-specific API calls
-2. Handles authentication and security
-3. Processes and formats responses for AI consumption
-4. Manages rate limiting and error handling
-
-## Configuration
-
-Each MCP integration has its own configuration requirements, typically involving:
-
-- API keys and authentication tokens
-- Service-specific settings
-- Permission scopes
-- Environment variables
-
-### PlantUML MCP Configuration (Published npm Package)
-
-The PlantUML MCP npm package can be configured using:
-
-1. When using the npm package programmatically:
-   ```javascript
-   const { createServer, startServer } = require('@brainstack/plantuml-mcp');
-
-   // Configure with custom PlantUML server URL
-   const server = createServer({
-     plantUmlServerUrl: 'https://your-custom-plantuml-server.com'
-   });
-
-   startServer(server);
-   ```
-
-2. When using the repository version:
-   - Environment variables in a `.env` file:
-     ```
-     # Optional: Custom PlantUML server URL
-     PLANTUML_SERVER_URL=https://www.plantuml.com/plantuml
-     ```
-   - Configuration files in the `config` directory:
-     - `mcp-config-plantuml.json`: Standard configuration
-     - `mcp-config-plantuml-wsl.json`: WSL-specific configuration
-
-### Slack MCP Configuration
-
-The Slack MCP requires:
-
-1. Slack API credentials in a `.env` file
-2. Workspace-specific configuration in the JSON config file
-
-## Security Considerations
-
-- All authentication credentials are stored locally in `.env` files
-- Sensitive information is never committed to version control
-- The `.gitignore` file is configured to exclude `.env` files
-- MCP implementations follow security best practices for each integrated service
+Each MCP directory contains complete configuration files and run scripts that work out of the box with the Augment Code extension.
 
 ## MCP Features
 
-### PlantUML MCP (Published npm Package)
-- **Complete, published npm package**: Install with `npm install @brainstack/plantuml-mcp`
-- Generate UML diagrams from PlantUML code
-- Support for multiple output formats (PNG, SVG, TXT)
-- Automatic footer branding on all diagrams
-- Dark theme support with styling recommendations
-- Compatible with the Model Context Protocol standard
-- Comprehensive documentation and examples
+Each MCP in this repository is fully configured and ready to use with the Augment Code extension:
 
-### Slack MCP (In Development)
-- Post messages to Slack channels
-- Reply to threads
-- Add emoji reactions
-- Get channel history
-- List channels and users
-- Access user profiles
+### PlantUML MCP
+- **Generate UML diagrams** with automatic branding
+- **Multiple formats**: PNG, SVG, and text output
+- **Dark theme support** with professional styling
+- **Available as npm package**: `npm install @brainstack/plantuml-mcp`
 
-### PostgREST MCP (In Development)
-- Execute SQL queries via RESTful API
-- Convert SQL to REST requests
-- Access database resources securely
+### Slack MCP
+- **Post and read messages** in channels and threads
+- **React with emojis** to messages
+- **List channels and users** in your workspace
+- **Access user profiles** and information
 
-## Development
+### PostgREST MCP
+- **Execute SQL queries** via a RESTful API
+- **Convert SQL to REST** requests automatically
+- **Access database resources** securely
 
-The MCP architecture is designed to be extensible, allowing for the addition of new service integrations through a standardized interface.
+## Works with Augment Code
+
+These MCPs are fully compatible with the Augment Code VSCode extension, enabling AI assistants to:
+
+- Generate diagrams and visualizations
+- Interact with external services
+- Access and manipulate data
+- Extend AI capabilities with specialized tools
+
+For more information, visit the [Augment Code website](https://augment.dev/).
 

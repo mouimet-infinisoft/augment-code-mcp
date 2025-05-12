@@ -22,6 +22,8 @@ else
   echo "Using default configuration."
 fi
 
+npm i @brainstack/plantuml-mcp -g
+
 # Run the MCP server
 echo "Starting PlantUML MCP Server with stdio..."
 npx -y @brainstack/plantuml-mcp

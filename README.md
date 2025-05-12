@@ -16,6 +16,7 @@ The Model Context Protocol (MCP) is a standardized way for AI assistants to inte
 - **PlantUML MCP** (`@brainstack/plantuml-mcp`): Generate professional UML diagrams with automatic branding
 - **Slack MCP**: Interact with Slack workspaces, channels, and messages
 - **PostgREST MCP**: Access PostgreSQL databases through a RESTful API
+- **Memory MCP**: Store and retrieve persistent memories for AI assistants
 
 ## Quick Start
 
@@ -48,6 +49,12 @@ Each MCP in this repository is fully configured and ready to use with the Augmen
 - **Execute SQL queries** via a RESTful API
 - **Convert SQL to REST** requests automatically
 - **Access database resources** securely
+
+### Memory MCP
+- **Store memories** in a persistent knowledge graph
+- **Retrieve memories** based on natural language queries
+- **Create a long-term memory** for AI assistants
+- **No configuration required** - works out of the box
 
 ## Works with Augment Code
 

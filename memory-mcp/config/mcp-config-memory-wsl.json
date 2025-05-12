@@ -1,0 +1,11 @@
+{
+  "memory": {
+    "command": "wsl.exe",
+    "args": [
+      "bash",
+      "-c",
+      "\"cd /home/nitr0gen/augment-code-mcp/memory-mcp/config && ./run-memory-mcp.sh\""
+    ],
+    "stdio": true
+  }
+}

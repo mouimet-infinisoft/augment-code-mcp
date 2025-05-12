@@ -13,8 +13,11 @@ The Model Context Protocol (MCP) is a core component of Augment Code that facili
 
 ## Supported Integrations
 
+### Custom MCP Servers (Published on npm)
+- **PlantUML MCP** (`@brainstack/plantuml-mcp`): A complete, published MCP server that allows AI assistants to generate UML diagrams with automatic branding
+
+### MCP Configurations (In Development)
 - **Slack MCP**: Enables AI assistants to interact with Slack workspaces, channels, and messages
-- **PlantUML MCP**: Allows AI assistants to generate UML diagrams with automatic branding
 - **PostgREST MCP**: Provides database access through a RESTful API
 - Additional integrations are being developed
 
@@ -25,12 +28,37 @@ The Model Context Protocol (MCP) is a core component of Augment Code that facili
 - **Augment Code Extension**: Install the Augment Code extension in VSCode
 - **WSL 2**: Running in Windows Subsystem for Linux 2 environment
 
-### Installation Steps
+### Installation Options
+
+#### Option 1: Using Published npm Package (Recommended for PlantUML MCP)
+1. Install the published package:
+   ```bash
+   npm install @brainstack/plantuml-mcp
+   ```
+
+2. Create a script to run the server:
+   ```javascript
+   const { createServer, startServer } = require('@brainstack/plantuml-mcp');
+   const server = createServer();
+   startServer(server);
+   ```
+
+#### Option 2: Using This Repository
 1. Clone this repository to your local environment
 2. Navigate to the specific MCP directory you want to use
 3. Follow the setup instructions in the MCP-specific README
 
-### Running the PlantUML MCP
+### Running the PlantUML MCP Server
+
+#### Method 1: Using the npm Package (Recommended)
+1. Install the package:
+   ```bash
+   npm install @brainstack/plantuml-mcp
+   ```
+
+2. Run using the provided scripts or create your own implementation
+
+#### Method 2: Using This Repository
 1. Navigate to the PlantUML MCP directory:
    ```bash
    cd plantuml-mcp
@@ -51,7 +79,7 @@ The Model Context Protocol (MCP) is a core component of Augment Code that facili
    cp config/mcp-config-plantuml-wsl.json config/mcp-config-plantuml.json
    ```
 
-### Running the Slack MCP
+### Running the Slack MCP (In Development)
 1. Navigate to the Slack MCP directory:
    ```bash
    cd slack-mcp
@@ -90,19 +118,31 @@ Each MCP integration has its own configuration requirements, typically involving
 - Permission scopes
 - Environment variables
 
-### PlantUML MCP Configuration
+### PlantUML MCP Configuration (Published npm Package)
 
-The PlantUML MCP can be configured using:
+The PlantUML MCP npm package can be configured using:
 
-1. Environment variables in a `.env` file:
+1. When using the npm package programmatically:
+   ```javascript
+   const { createServer, startServer } = require('@brainstack/plantuml-mcp');
+
+   // Configure with custom PlantUML server URL
+   const server = createServer({
+     plantUmlServerUrl: 'https://your-custom-plantuml-server.com'
+   });
+
+   startServer(server);
    ```
-   # Optional: Custom PlantUML server URL
-   PLANTUML_SERVER_URL=https://www.plantuml.com/plantuml
-   ```
 
-2. Configuration files in the `config` directory:
-   - `mcp-config-plantuml.json`: Standard configuration
-   - `mcp-config-plantuml-wsl.json`: WSL-specific configuration
+2. When using the repository version:
+   - Environment variables in a `.env` file:
+     ```
+     # Optional: Custom PlantUML server URL
+     PLANTUML_SERVER_URL=https://www.plantuml.com/plantuml
+     ```
+   - Configuration files in the `config` directory:
+     - `mcp-config-plantuml.json`: Standard configuration
+     - `mcp-config-plantuml-wsl.json`: WSL-specific configuration
 
 ### Slack MCP Configuration
 
@@ -120,14 +160,16 @@ The Slack MCP requires:
 
 ## MCP Features
 
-### PlantUML MCP
+### PlantUML MCP (Published npm Package)
+- **Complete, published npm package**: Install with `npm install @brainstack/plantuml-mcp`
 - Generate UML diagrams from PlantUML code
 - Support for multiple output formats (PNG, SVG, TXT)
 - Automatic footer branding on all diagrams
 - Dark theme support with styling recommendations
 - Compatible with the Model Context Protocol standard
+- Comprehensive documentation and examples
 
-### Slack MCP
+### Slack MCP (In Development)
 - Post messages to Slack channels
 - Reply to threads
 - Add emoji reactions
@@ -135,7 +177,7 @@ The Slack MCP requires:
 - List channels and users
 - Access user profiles
 
-### PostgREST MCP
+### PostgREST MCP (In Development)
 - Execute SQL queries via RESTful API
 - Convert SQL to REST requests
 - Access database resources securely

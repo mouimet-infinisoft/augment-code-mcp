@@ -1,6 +1,6 @@
 {
   "name": "@brainstack/plantuml-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "PlantUML Model Context Protocol (MCP) server for generating UML diagrams",
   "publishConfig": {
     "access": "public"

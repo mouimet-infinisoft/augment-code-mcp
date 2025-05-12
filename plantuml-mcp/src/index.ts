@@ -1,4 +1,4 @@
-import { createServer, startServer } from './server';
+import { createServer, startServer } from './server.js';
 import * as dotenv from 'dotenv';
 
 // Load environment variables from .env file

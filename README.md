@@ -14,6 +14,8 @@ The Model Context Protocol (MCP) is a core component of Augment Code that facili
 ## Supported Integrations
 
 - **Slack MCP**: Enables AI assistants to interact with Slack workspaces, channels, and messages
+- **PlantUML MCP**: Allows AI assistants to generate UML diagrams with automatic branding
+- **PostgREST MCP**: Provides database access through a RESTful API
 - Additional integrations are being developed
 
 ## How to Use
@@ -24,9 +26,39 @@ The Model Context Protocol (MCP) is a core component of Augment Code that facili
 - **WSL 2**: Running in Windows Subsystem for Linux 2 environment
 
 ### Installation Steps
-1. Copy the MCP scripts to your local environment
-2. Import the configuration using the JSON configuration file
-3. Update the paths in the configuration to match your local setup
+1. Clone this repository to your local environment
+2. Navigate to the specific MCP directory you want to use
+3. Follow the setup instructions in the MCP-specific README
+
+### Running the PlantUML MCP
+1. Navigate to the PlantUML MCP directory:
+   ```bash
+   cd plantuml-mcp
+   ```
+
+2. Make the run script executable:
+   ```bash
+   chmod +x config/run-plantuml-mcp.sh
+   ```
+
+3. Run the MCP server:
+   ```bash
+   ./config/run-plantuml-mcp.sh
+   ```
+
+4. For WSL 2 users, use the WSL-specific configuration:
+   ```bash
+   cp config/mcp-config-plantuml-wsl.json config/mcp-config-plantuml.json
+   ```
+
+### Running the Slack MCP
+1. Navigate to the Slack MCP directory:
+   ```bash
+   cd slack-mcp
+   ```
+
+2. Configure your Slack credentials in the `.env` file
+3. Run the MCP server using the provided script
 
 ### Integration with Augment Code
 1. Open VSCode with the Augment Code extension installed
@@ -58,12 +90,55 @@ Each MCP integration has its own configuration requirements, typically involving
 - Permission scopes
 - Environment variables
 
+### PlantUML MCP Configuration
+
+The PlantUML MCP can be configured using:
+
+1. Environment variables in a `.env` file:
+   ```
+   # Optional: Custom PlantUML server URL
+   PLANTUML_SERVER_URL=https://www.plantuml.com/plantuml
+   ```
+
+2. Configuration files in the `config` directory:
+   - `mcp-config-plantuml.json`: Standard configuration
+   - `mcp-config-plantuml-wsl.json`: WSL-specific configuration
+
+### Slack MCP Configuration
+
+The Slack MCP requires:
+
+1. Slack API credentials in a `.env` file
+2. Workspace-specific configuration in the JSON config file
+
 ## Security Considerations
 
 - All authentication credentials are stored locally in `.env` files
 - Sensitive information is never committed to version control
 - The `.gitignore` file is configured to exclude `.env` files
 - MCP implementations follow security best practices for each integrated service
+
+## MCP Features
+
+### PlantUML MCP
+- Generate UML diagrams from PlantUML code
+- Support for multiple output formats (PNG, SVG, TXT)
+- Automatic footer branding on all diagrams
+- Dark theme support with styling recommendations
+- Compatible with the Model Context Protocol standard
+
+### Slack MCP
+- Post messages to Slack channels
+- Reply to threads
+- Add emoji reactions
+- Get channel history
+- List channels and users
+- Access user profiles
+
+### PostgREST MCP
+- Execute SQL queries via RESTful API
+- Convert SQL to REST requests
+- Access database resources securely
 
 ## Development
 

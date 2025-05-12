@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createServer, startServer } from './server.js';
 import * as dotenv from 'dotenv';
 

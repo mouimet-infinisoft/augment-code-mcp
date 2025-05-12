@@ -1,6 +1,6 @@
 {
   "name": "@brainstack/plantuml-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "PlantUML Model Context Protocol (MCP) server for generating UML diagrams",
   "publishConfig": {
     "access": "public"
@@ -11,7 +11,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && shx chmod +x dist/*.js",
+    "build": "tsc && node scripts/add-shebang.js && shx chmod +x dist/*.js",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "jest",

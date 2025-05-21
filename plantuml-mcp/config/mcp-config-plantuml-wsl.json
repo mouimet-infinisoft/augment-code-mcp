@@ -2,10 +2,9 @@
   "plantuml": {
     "command": "wsl.exe",
     "args": [
-      "-e",
-      "npx",
-      "-y",
-      "@brainstack/plantuml-mcp@latest"
+      "bash",
+      "-c",
+      "npx -y @brainstack/plantuml-mcp@latest"
     ],
     "stdio": true
   }

@@ -1,0 +1,11 @@
+{
+  "n8n-workflow-builder": {
+    "command": "wsl.exe",
+    "args": [
+      "bash",
+      "-c",
+      "\"cd /home/agent1/augment-code-mcp/n8n-workflow-builder-mcp/config && ./run-n8n-workflow-builder-mcp.sh\""
+    ],
+    "stdio": true
+  }
+}

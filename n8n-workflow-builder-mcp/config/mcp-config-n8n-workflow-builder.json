@@ -1,0 +1,10 @@
+{
+  "n8n-workflow-builder": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@kernel.salacoste/n8n-workflow-builder"
+    ],
+    "stdio": true
+  }
+}

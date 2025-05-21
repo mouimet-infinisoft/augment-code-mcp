@@ -108,12 +108,53 @@ export function createServer(config: ServerConfig = {}): Server {
     console.log(`Sending text to API: ${text}`);
 
     // Send the text to the API endpoint
-    const response = await axios.post('http://localhost:3000/api/mcp/speak', { text });
+    await axios.post('http://localhost:3000/api/mcp/speak', { text });
 
-    return "sent"
+    console.log("Waiting for user response...");
 
+    // Wait for user messages with a timeout
+    return new Promise((resolve) => {
+      // Maximum wait time in milliseconds (3000 seconds)
+      const maxWaitTime = 3000000;
+      const startTime = Date.now();
+      let userResponded = false;
+
+      // Check for user messages every 2 seconds
+      const intervalId = setInterval(async () => {
+        try {
+          // Check if we've exceeded the maximum wait time
+          if (Date.now() - startTime > maxWaitTime) {
+            clearInterval(intervalId);
+            console.log("Timeout waiting for user response");
+            resolve("No response from user within timeout period");
+            return;
+          }
+
+          // Get user messages
+          const response = await axios.get('http://localhost:3000/api/mcp/user-messages');
+          const messages = response.data?.messages ?? [];
+
+          // If we have messages, return them
+          if (messages.length > 0) {
+            clearInterval(intervalId);
+            userResponded = true;
+            const userResponse = messages.map((msg: any) => msg.text).join("\n");
+            console.log(`Received user response: ${userResponse}`);
+            resolve(userResponse);
+          }
+        } catch (error) {
+          console.error("Error checking for user messages:", error);
+          // Don't reject on error, just continue waiting
+        }
+      }, 2000);
+
+      // Ensure the interval is cleared if the promise is rejected
+      process.on('unhandledRejection', () => {
+        clearInterval(intervalId);
+      });
+    });
   }
-  const getUserMessagesToolHandler = async (request: CallToolRequest) => {
+  const getUserMessagesToolHandler = async (_request: CallToolRequest) => {
     // Send the text to the API endpoint
     const response = await axios.get('http://localhost:3000/api/mcp/user-messages');
     const messages = response.data?.messages ?? []

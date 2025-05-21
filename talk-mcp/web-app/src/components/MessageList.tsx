@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useSpeech } from '@/hooks/useSpeech';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
+import { stripMarkdown } from '@/utils/textUtils';
 
 interface Message {
   id: string;
@@ -20,7 +24,19 @@ export default function MessageList() {
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
+  // We'll use isListening from the hook instead of a separate state
   const { speak, voices, isSpeaking, cancel } = useSpeech();
+  const {
+    isListening,
+    transcript,
+    startListening,
+    stopListening,
+    resetTranscript,
+    hasRecognitionSupport
+  } = useSpeechRecognition();
+
+  // Reference to message container for auto-scrolling
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch messages from the API - only get new messages from MCP tool
   const fetchMessages = async () => {
@@ -43,7 +59,11 @@ export default function MessageList() {
         if (currentAutoSpeak && !currentIsSpeaking && newMessages.length > 0) {
           // Only speak the first message if there are multiple
           const messageToSpeak = newMessages[0];
-          speak(messageToSpeak.text, {
+
+          // Strip markdown for speech
+          const plainText = stripMarkdown(messageToSpeak.text);
+
+          speak(plainText, {
             voice: currentVoice,
             rate: currentRate,
             onEnd: () => {
@@ -126,6 +146,52 @@ export default function MessageList() {
     return () => clearInterval(intervalId);
   }, [/* Empty dependency array to run only once */]);
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Update user input when speech recognition transcript changes
+  useEffect(() => {
+    if (isListening && transcript) {
+      setUserInput(transcript);
+    }
+  }, [transcript, isListening]);
+
+  // Reset transcript when stopping listening
+  useEffect(() => {
+    if (!isListening) {
+      resetTranscript();
+    }
+  }, [isListening, resetTranscript]);
+
+  // Set default voice to Microsoft Jenny Online (Natural) - English (United States)
+  useEffect(() => {
+    if (voices.length > 0) {
+      const jennyVoice = voices.find(voice =>
+        voice.name.includes('Microsoft Jenny Online (Natural)') &&
+        voice.lang.includes('en-US')
+      );
+
+      if (jennyVoice) {
+        setSelectedVoice(jennyVoice);
+        console.log('Set default voice to Microsoft Jenny Online (Natural)');
+      } else {
+        // Fallback to first English voice if Jenny is not available
+        const englishVoice = voices.find(voice => voice.lang.includes('en'));
+        if (englishVoice) {
+          setSelectedVoice(englishVoice);
+          console.log('Fallback to first English voice:', englishVoice.name);
+        }
+      }
+    }
+  }, [voices]);
+
   // Format timestamp
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString();
@@ -149,8 +215,11 @@ export default function MessageList() {
       cancel();
     }
 
+    // Strip markdown for speech
+    const plainText = stripMarkdown(message.text);
+
     // Speak immediately
-    speak(message.text, {
+    speak(plainText, {
       voice: selectedVoice,
       rate,
       onEnd: () => {
@@ -255,7 +324,11 @@ export default function MessageList() {
                         {message.role === 'assistant' ? 'Assistant' : 'You'}
                       </span>
                     </div>
-                    <p className="font-medium text-gray-900">{message.text}</p>
+                    <div className="font-medium text-gray-900 prose prose-sm max-w-none">
+                      <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                        {message.text}
+                      </ReactMarkdown>
+                    </div>
                     <div className="flex items-center mt-1">
                       <p className="text-sm text-gray-600">
                         {formatTime(message.timestamp)}
@@ -286,6 +359,7 @@ export default function MessageList() {
             ))}
           </ul>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* User input form */}
@@ -303,14 +377,51 @@ export default function MessageList() {
             onChange={(e) => setUserInput(e.target.value)}
             placeholder="Type your message here..."
             className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={sendingMessage}
+            disabled={sendingMessage || isListening}
           />
+
+          {/* Speech-to-text button */}
+          {hasRecognitionSupport && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isListening) {
+                  stopListening();
+                } else {
+                  resetTranscript();
+                  startListening();
+                }
+              }}
+              className={`p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                isListening
+                  ? 'bg-red-500 text-white hover:bg-red-600'
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+              }`}
+              title={isListening ? "Stop recording" : "Start speech-to-text"}
+              disabled={sendingMessage}
+            >
+              {isListening ? (
+                <span className="flex items-center">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                  </svg>
+                </span>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+              )}
+            </button>
+          )}
+
+          {/* Send button */}
           <button
             type="submit"
             className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-              sendingMessage ? 'opacity-50 cursor-not-allowed' : ''
+              sendingMessage || isListening || !userInput.trim() ? 'opacity-50 cursor-not-allowed' : ''
             }`}
-            disabled={sendingMessage || !userInput.trim()}
+            disabled={sendingMessage || isListening || !userInput.trim()}
           >
             {sendingMessage ? (
               <span className="flex items-center">
@@ -325,6 +436,17 @@ export default function MessageList() {
             )}
           </button>
         </form>
+
+        {/* Speech recognition status */}
+        {isListening && (
+          <div className="mt-2 text-sm text-gray-600 flex items-center">
+            <span className="relative flex h-3 w-3 mr-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            </span>
+            Recording... Speak now
+          </div>
+        )}
       </div>
 
       <div className="text-center p-2 bg-blue-50 rounded-lg border border-blue-100 flex justify-center items-center space-x-4">
@@ -337,12 +459,21 @@ export default function MessageList() {
         </p>
 
         {isSpeaking && (
-          <div className="flex items-center text-blue-600 font-medium">
-            <span className="relative flex h-3 w-3 mr-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-            </span>
-            Speaking...
+          <div className="flex items-center">
+            <div className="flex items-center text-blue-600 font-medium mr-3">
+              <span className="relative flex h-3 w-3 mr-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+              </span>
+              Speaking...
+            </div>
+            <button
+              onClick={cancel}
+              className="px-2 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              title="Stop speaking"
+            >
+              Stop
+            </button>
           </div>
         )}
       </div>

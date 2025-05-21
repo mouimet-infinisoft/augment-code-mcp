@@ -69,7 +69,6 @@ export function createServer(config: ServerConfig = {}): Server {
             type: 'text',
             text: JSON.stringify({
               status: 'sent',
-              apiResponse: response.data
             })
           }
         ]

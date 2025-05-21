@@ -20,9 +20,6 @@ interface ServerConfig {
  * @returns MCP server instance
  */
 export function createServer(config: ServerConfig = {}): Server {
-  // Default API endpoint if not provided
-  const apiEndpoint = config.apiEndpoint || 'http://localhost:3000/api/speak';
-
   // Create an MCP server
   const server = new Server({
     name: 'Talk MCP',
@@ -51,28 +48,36 @@ export function createServer(config: ServerConfig = {}): Server {
     },
   };
 
+  // Tool for getting user messages
+  const getUserMessagesTool: Tool = {
+    name: "get_user_messages",
+    description:
+      "Get messages from the user. Use this tool to check if the user has sent any new messages.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  };
+
 
   server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
     console.error("Received CallToolRequest:", request);
+    let response;
 
     try {
 
-      const text = request.params.arguments?.text;
-      console.log(`Sending text to API: ${text}`);
+      switch (request.params.name) {
+        case 'speech_response':
+          response = await speechResponseToolHandler(request);
+          break;
+        case 'get_user_messages':
+          response = await getUserMessagesToolHandler(request);
+          break;
+        default:
+          throw new Error(`Unknown tool: ${request.params.name}`);
 
-      // Send the text to the API endpoint
-      const response = await axios.post(apiEndpoint, { text });
+      }
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              status: 'sent',
-            })
-          }
-        ]
-      };
     } catch (error) {
       console.error('Error sending text to API:', error);
       return {
@@ -85,7 +90,37 @@ export function createServer(config: ServerConfig = {}): Server {
         isError: true
       };
     }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: response
+        }
+      ],
+    };
+
   })
+
+
+  const speechResponseToolHandler = async (request: CallToolRequest) => {
+    const text = request.params.arguments?.text;
+    console.log(`Sending text to API: ${text}`);
+
+    // Send the text to the API endpoint
+    const response = await axios.post('http://localhost:3000/api/mcp/speak', { text });
+
+    return "sent"
+
+  }
+  const getUserMessagesToolHandler = async (request: CallToolRequest) => {
+    // Send the text to the API endpoint
+    const response = await axios.get('http://localhost:3000/api/mcp/user-messages');
+    const messages = response.data?.messages ?? []
+
+    return messages.map((msg: any) => msg.text).join("\n")
+
+  }
 
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -93,6 +128,7 @@ export function createServer(config: ServerConfig = {}): Server {
     return {
       tools: [
         speechResponseTool,
+        getUserMessagesTool,
       ],
     };
   });

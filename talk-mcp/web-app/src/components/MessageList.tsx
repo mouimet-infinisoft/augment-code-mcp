@@ -8,22 +8,25 @@ interface Message {
   id: string;
   text: string;
   timestamp: string;
+  role: 'user' | 'assistant';
   spoken?: boolean;
 }
 
 export default function MessageList() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [userInput, setUserInput] = useState('');
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [rate, setRate] = useState(1);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const { speak, voices, isSpeaking, cancel } = useSpeech();
 
-  // Fetch messages from the API - only get new messages
+  // Fetch messages from the API - only get new messages from MCP tool
   const fetchMessages = async () => {
     try {
-      // Only get new messages (not marked as sent on the server)
-      const response = await axios.get('/api/speak');
+      // Only get new messages from MCP tool (not marked as sent on the server)
+      const response = await axios.get('/api/mcp/speak');
 
       if (response.data && response.data.messages && response.data.messages.length > 0) {
         // Add new messages to our list
@@ -61,12 +64,62 @@ export default function MessageList() {
     }
   };
 
+  // Fetch all messages for initial load
+  const fetchAllMessages = async () => {
+    try {
+      setLoading(true);
+      // Get all messages (both user and assistant)
+      const response = await axios.get('/api/mcp/speak?all=true');
+
+      if (response.data && response.data.messages) {
+        setMessages(response.data.messages);
+      }
+    } catch (error) {
+      console.error('Error fetching all messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Send a user message
+  const sendUserMessage = async () => {
+    if (!userInput.trim()) return;
+
+    try {
+      setSendingMessage(true);
+
+      // Create a temporary message to show immediately
+      const tempMessage: Message = {
+        id: 'temp-' + Date.now(),
+        text: userInput,
+        timestamp: new Date().toISOString(),
+        role: 'user',
+        spoken: true // User messages don't need to be spoken
+      };
+
+      // Add to local messages
+      setMessages(prev => [...prev, tempMessage]);
+
+      // Send to API
+      await axios.post('/api/user/speak', { text: userInput });
+
+      // Clear input
+      setUserInput('');
+    } catch (error) {
+      console.error('Error sending user message:', error);
+      // Remove the temporary message on error
+      setMessages(prev => prev.filter(msg => msg.id !== 'temp-' + Date.now()));
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   // Initial fetch and polling for new messages
   useEffect(() => {
-    // Fetch messages immediately
-    fetchMessages();
+    // Fetch all messages for initial load
+    fetchAllMessages();
 
-    // Set up polling every 2 seconds
+    // Set up polling every 2 seconds for new messages
     const intervalId = setInterval(fetchMessages, 2000);
 
     // Cleanup
@@ -185,16 +238,29 @@ export default function MessageList() {
             {messages.map((message) => (
               <li
                 key={message.id}
-                className={`p-4 hover:bg-blue-50 ${message.spoken ? 'border-l-4 border-green-500 pl-3' : ''}`}
+                className={`p-4 hover:bg-blue-50 ${
+                  message.role === 'assistant'
+                    ? message.spoken ? 'border-l-4 border-green-500 pl-3' : ''
+                    : 'border-r-4 border-blue-500 pr-3'
+                }`}
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
+                    <div className="flex items-center mb-1">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        message.role === 'assistant'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {message.role === 'assistant' ? 'Assistant' : 'You'}
+                      </span>
+                    </div>
                     <p className="font-medium text-gray-900">{message.text}</p>
                     <div className="flex items-center mt-1">
                       <p className="text-sm text-gray-600">
                         {formatTime(message.timestamp)}
                       </p>
-                      {message.spoken && (
+                      {message.role === 'assistant' && message.spoken && (
                         <span className="ml-2 text-xs text-green-600 flex items-center font-medium">
                           <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -204,20 +270,61 @@ export default function MessageList() {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => speakMessage(message)}
-                    className={`ml-2 p-2 rounded-full hover:bg-blue-100 ${
-                      message.spoken ? 'text-blue-400 hover:text-blue-600' : 'text-blue-500 hover:text-blue-700'
-                    }`}
-                    title={message.spoken ? "Speak this message again" : "Speak this message"}
-                  >
-                    🔊
-                  </button>
+                  {message.role === 'assistant' && (
+                    <button
+                      onClick={() => speakMessage(message)}
+                      className={`ml-2 p-2 rounded-full hover:bg-blue-100 ${
+                        message.spoken ? 'text-blue-400 hover:text-blue-600' : 'text-blue-500 hover:text-blue-700'
+                      }`}
+                      title={message.spoken ? "Speak this message again" : "Speak this message"}
+                    >
+                      🔊
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
         )}
+      </div>
+
+      {/* User input form */}
+      <div className="mb-4 border border-gray-200 rounded-lg bg-white shadow-sm p-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendUserMessage();
+          }}
+          className="flex items-center space-x-2"
+        >
+          <input
+            type="text"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            placeholder="Type your message here..."
+            className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={sendingMessage}
+          />
+          <button
+            type="submit"
+            className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              sendingMessage ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            disabled={sendingMessage || !userInput.trim()}
+          >
+            {sendingMessage ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Sending...
+              </span>
+            ) : (
+              'Send'
+            )}
+          </button>
+        </form>
       </div>
 
       <div className="text-center p-2 bg-blue-50 rounded-lg border border-blue-100 flex justify-center items-center space-x-4">

@@ -1,0 +1,10 @@
+{
+  "talk": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "talk-mcp"
+    ],
+    "stdio": true
+  }
+}

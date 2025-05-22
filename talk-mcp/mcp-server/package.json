@@ -1,0 +1,45 @@
+{
+  "name": "@brainstack/talk-mcp",
+  "version": "0.1.0",
+  "description": "MCP tool for converting text to speech",
+  "main": "dist/index.js",
+  "type": "module",
+    "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "talk-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "text-to-speech",
+    "augment-code"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": ">=1.11.0",
+    "axios": "^1.9.0",
+    "dotenv": "^16.0.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
+    "eslint": "^8.37.0",
+    "jest": "^29.5.0",
+    "rimraf": "^4.4.1",
+    "shx": "^0.4.0",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  }
+}

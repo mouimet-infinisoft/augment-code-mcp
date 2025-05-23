@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* Light mode variables */
   --background: #f9fafb;
   --foreground: #1e293b;
   --primary: #2563eb;
@@ -8,6 +9,41 @@
   --primary-dark: #1e40af;
   --text-light: #64748b;
   --text-dark: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --header-bg: #2563eb;
+  --header-text: #ffffff;
+  --footer-bg: #1e40af;
+  --footer-text: #ffffff;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-text: #1e293b;
+  --settings-bg: #eff6ff;
+  --settings-border: #bfdbfe;
+  --settings-text: #1e40af;
+}
+
+.dark {
+  /* Dark mode variables */
+  --background: #111827;
+  --foreground: #e5e7eb;
+  --primary: #3b82f6;
+  --primary-light: #1e3a8a;
+  --primary-dark: #60a5fa;
+  --text-light: #9ca3af;
+  --text-dark: #f3f4f6;
+  --card-bg: #1f2937;
+  --card-border: #374151;
+  --header-bg: #1e3a8a;
+  --header-text: #f3f4f6;
+  --footer-bg: #111827;
+  --footer-text: #e5e7eb;
+  --input-bg: #374151;
+  --input-border: #4b5563;
+  --input-text: #f3f4f6;
+  --settings-bg: #1e3a8a;
+  --settings-border: #3b82f6;
+  --settings-text: #e5e7eb;
 }
 
 @theme inline {
@@ -17,27 +53,32 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Force light mode for better visibility */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Improve text contrast */
 p, h1, h2, h3, h4, h5, h6, span, div {
   color: var(--text-dark);
+  transition: color 0.3s ease;
 }
 
 /* Ensure form elements have good contrast */
 input, select, button, textarea {
-  color: var(--text-dark);
+  color: var(--input-text);
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Ensure links are visible */
 a {
   color: var(--primary);
   text-decoration: underline;
+  transition: color 0.3s ease;
 }
 
 /* Improve focus states for accessibility */

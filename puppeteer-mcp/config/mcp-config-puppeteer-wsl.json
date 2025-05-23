@@ -1,0 +1,10 @@
+{
+  "pupeteer": {
+    "command": "wsl.exe",
+    "args": [
+      "bash",
+      "-c",
+      "\"cd /home/agent1/augment-code-mcp/puppeteer-mcp/config && ./run.sh \""
+    ]
+  }
+}

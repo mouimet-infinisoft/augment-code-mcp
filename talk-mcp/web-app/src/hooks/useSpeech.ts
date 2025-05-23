@@ -85,7 +85,7 @@ export function useSpeech(options: SpeechOptions = {}) {
     };
 
     utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
+      // console.error('Speech synthesis error:', event);
       setIsSpeaking(false);
       setIsPaused(false);
     };

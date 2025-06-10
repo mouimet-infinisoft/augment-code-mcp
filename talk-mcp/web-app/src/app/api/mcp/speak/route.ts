@@ -5,7 +5,8 @@ import { addMessage, getUnsentMessages, markMessagesAsSent } from '@/lib/message
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { text } = body;
+    console.log("Received speech request:", body);
+    const { text, ai_teammate } = body;
 
     if (!text) {
       return NextResponse.json(
@@ -14,17 +15,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Add message from MCP tool (type: 'assistant')
+    // Default to 'system' if no AI teammate specified
+    const teammate = ai_teammate || 'system';
+
+    // Add message from MCP tool (type: 'assistant') with AI teammate info
     const message = addMessage({
       text,
       role: 'assistant',
-      sent: false
+      sent: false,
+      ai_teammate: teammate
     });
+
+    console.log(`Received speech request from AI teammate: ${teammate}`);
 
     return NextResponse.json({
       success: true,
       message: 'Message received and will be spoken',
       messageId: message.id,
+      ai_teammate: teammate,
     });
   } catch (error) {
     console.error('Error processing MCP speak request:', error);
@@ -40,7 +48,7 @@ export async function GET(request: Request) {
   // Get the URL parameters
   const { searchParams } = new URL(request.url);
   const getAll = searchParams.get('all') === 'true';
-  const role = searchParams.get('role') || 'assistant';
+  const role  = (searchParams.get('role') || 'assistant') as 'assistant' | 'user';
   
   if (getAll) {
     // Return all messages if requested (for debugging)

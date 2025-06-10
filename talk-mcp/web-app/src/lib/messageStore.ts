@@ -6,6 +6,7 @@ export interface Message {
   timestamp: string;
   role: 'user' | 'assistant';
   sent: boolean; // Track if the message has been sent to the client
+  ai_teammate?: string; // Name of the AI teammate (for voice identification)
 }
 
 // In-memory storage for messages
@@ -21,13 +22,15 @@ export function addMessage(messageData: {
   text: string;
   role: 'user' | 'assistant';
   sent: boolean;
+  ai_teammate?: string;
 }): Message {
   const message: Message = {
     id: generateId(),
     text: messageData.text,
     timestamp: new Date().toISOString(),
     role: messageData.role,
-    sent: messageData.sent
+    sent: messageData.sent,
+    ai_teammate: messageData.ai_teammate
   };
 
   // Add to in-memory storage

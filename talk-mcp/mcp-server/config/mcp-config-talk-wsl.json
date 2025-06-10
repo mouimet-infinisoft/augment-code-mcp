@@ -4,7 +4,7 @@
     "args": [
       "bash",
       "-c",
-      "\"cd /home/agent1/augment-code-mcp/talk-mcp/mcp-server/config && ./run-talk-mcp.sh \""
+      "\"cd /home/agent2/augment-code-mcp/talk-mcp/mcp-server/config && ./run-talk-mcp.sh \""
     ]
   }
 }

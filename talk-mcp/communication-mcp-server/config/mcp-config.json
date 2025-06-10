@@ -1,0 +1,10 @@
+{
+  "communication": {
+    "command": "wsl.exe",
+    "args": [
+      "bash",
+      "-c",
+      "\"/home/agent2/augment-code-mcp/talk-mcp/communication-mcp-server/config/run.sh \""
+    ]
+  }
+}

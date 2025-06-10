@@ -8,24 +8,74 @@ import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import { stripMarkdown } from '@/utils/textUtils';
 
+// AI Teammates with their information
+const AI_TEAMMATES = {
+  'sarah': {
+    fullName: 'Sarah Chen',
+    jobTitle: 'AI Business Analyst',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+    voice: 'Microsoft Linda - English (Canada)'
+  },
+  'jordan': {
+    fullName: 'Jordan Martinez',
+    jobTitle: 'AI Projet Manager',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    voice: 'Google UK English Male'
+  },
+  'alex': {
+    fullName: 'Alex Thompson',
+    jobTitle: 'AI Architect',
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    voice: 'Microsoft David - English (United States)'
+  },
+  'system': {
+    fullName: 'System Assistant',
+    jobTitle: 'AI Assistant',
+    avatarUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=150&h=150&fit=crop&crop=face',
+    voice: 'Google UK English Male'
+  }
+} as const;
+
+// Simple function to find voice by preference
+function findVoiceByPreference(voices: SpeechSynthesisVoice[], voicePreference: string): SpeechSynthesisVoice | null {
+  // Try exact match first
+  const exactMatch = voices.find(v => v.name === voicePreference);
+  if (exactMatch) return exactMatch;
+
+  // Try partial matches
+  if (voicePreference.includes('Linda')) {
+    return voices.find(v => v.name.includes('Linda')) || null;
+  }
+  if (voicePreference.includes('David')) {
+    return voices.find(v => v.name.includes('David')) || null;
+  }
+  if (voicePreference.includes('Google UK')) {
+    return voices.find(v => v.name.includes('Google') && v.name.includes('UK')) || null;
+  }
+
+  return null;
+}
+
 interface Message {
   id: string;
   text: string;
   timestamp: string;
   role: 'user' | 'assistant';
   spoken?: boolean;
+  ai_teammate?: string; // The AI teammate identifier (e.g., 'sarah', 'jordan', 'alex', 'system')
 }
 
 export default function MessageList() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState('');
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [selecetedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [rate, setRate] = useState(1);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
-  // We'll use isListening from the hook instead of a separate state
-  const { speak, voices, isSpeaking, cancel } = useSpeech();
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const { speak, isSpeaking, cancel } = useSpeech();
   const {
     isListening,
     transcript,
@@ -35,46 +85,84 @@ export default function MessageList() {
     hasRecognitionSupport
   } = useSpeechRecognition();
 
+
+  // Initialize voices
+  useEffect(() => {
+    const synth = window.speechSynthesis;
+
+    // Function to load and set available voices
+    const loadVoices = () => {
+      const availableVoices = synth.getVoices();
+      if (availableVoices.length > 0) {
+        setVoices(availableVoices);
+        console.log(availableVoices);
+      }
+    };
+
+    // Load voices immediately if available
+    loadVoices();
+
+    // Chrome loads voices asynchronously, so we need this event
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    // Cleanup
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
+
   // Reference to message container for auto-scrolling
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Simple function to get teammate info
+  const getTeammateInfo = (ai_teammate?: string) => {
+    if (!ai_teammate) return null;
+    const name = ai_teammate.toLocaleLowerCase() as keyof typeof AI_TEAMMATES;
+    return AI_TEAMMATES[name] || null;
+  };
+
+  // Simple function to detect AI teammate from message text
+  const detectTeammate = (messageText: string): string | undefined => {
+    if (!messageText.includes(':')) return undefined;
+
+    const firstToken = String(messageText).split(":")[0].length > 15 ? String(messageText).split(":")[0].trim().toLowerCase(): "system";
+
+    // Check if it's a valid AI teammate key
+    if (AI_TEAMMATES[firstToken as keyof typeof AI_TEAMMATES]) {
+      return firstToken;
+    }
+
+    return undefined; // Default to undefined if not found
+  };
+
+  // Simple function to get voice for teammate
+  const getVoiceForTeammate = (ai_teammate?: string): SpeechSynthesisVoice | null => {
+    const teammateInfo = getTeammateInfo(ai_teammate);
+    if (!teammateInfo) return selectedVoice;
+
+    // Find voice by preference
+    const voice = findVoiceByPreference(voices, teammateInfo.voice);
+    return voice || selectedVoice;
+  };
 
   // Fetch messages from the API - only get new messages from MCP tool
   const fetchMessages = async () => {
     try {
-      // Only get new messages from MCP tool (not marked as sent on the server)
       const response = await axios.get('/api/mcp/speak');
 
       if (response.data && response.data.messages && response.data.messages.length > 0) {
-        // Add new messages to our list
         const newMessages = response.data.messages;
         setMessages(prev => [...prev, ...newMessages]);
 
-        // Get current state values to avoid closure issues
-        const currentAutoSpeak = autoSpeak;
-        const currentIsSpeaking = isSpeaking;
-        const currentVoice = selectedVoice;
-        const currentRate = rate;
-
         // If auto-speak is enabled, speak the new messages
-        if (currentAutoSpeak && !currentIsSpeaking && newMessages.length > 0) {
-          // Only speak the first message if there are multiple
+        if (autoSpeak && !isSpeaking && newMessages.length > 0) {
           const messageToSpeak = newMessages[0];
 
-          // Strip markdown for speech
-          const plainText = stripMarkdown(messageToSpeak.text);
-
-          speak(plainText, {
-            voice: currentVoice,
-            rate: currentRate,
-            onEnd: () => {
-              // Mark the message as spoken
-              setMessages(prevMessages =>
-                prevMessages.map(msg =>
-                  msg.id === messageToSpeak.id ? { ...msg, spoken: true } : msg
-                )
-              );
-            }
-          });
+          speakMessage(messageToSpeak);
         }
       }
     } catch (error) {
@@ -170,27 +258,16 @@ export default function MessageList() {
     }
   }, [isListening, resetTranscript]);
 
-  // Set default voice to Microsoft Jenny Online (Natural) - English (United States)
+  // Set up default voice
   useEffect(() => {
-    if (voices.length > 0) {
-      const jennyVoice = voices.find(voice =>
-        voice.name.includes('Microsoft Jenny Online (Natural)') &&
-        voice.lang.includes('en-US')
-      );
-
-      if (jennyVoice) {
-        setSelectedVoice(jennyVoice);
-        console.log('Set default voice to Microsoft Jenny Online (Natural)');
-      } else {
-        // Fallback to first English voice if Jenny is not available
-        const englishVoice = voices.find(voice => voice.lang.includes('en'));
-        if (englishVoice) {
-          setSelectedVoice(englishVoice);
-          console.log('Fallback to first English voice:', englishVoice.name);
-        }
+    if (voices.length > 0 && !selectedVoice) {
+      // Try to find a good default English voice
+      const englishVoice = voices.find(voice => voice.lang.includes('en'));
+      if (englishVoice) {
+        setSelectedVoice(englishVoice);
       }
     }
-  }, [voices]);
+  }, [voices, selectedVoice]);
 
   // Format timestamp
   const formatTime = (timestamp: string) => {
@@ -210,28 +287,63 @@ export default function MessageList() {
 
   // Speak a specific message
   const speakMessage = (message: Message) => {
-    // Cancel any ongoing speech
+    console.log("Speaking message:", message);
     if (isSpeaking) {
       cancel();
     }
 
-    // Strip markdown for speech
     const plainText = stripMarkdown(message.text);
 
-    // Speak immediately
-    speak(plainText, {
-      voice: selectedVoice,
+    // Extract ai_teammate from message text if not already set
+    if (!message.ai_teammate) {
+      console.log("Detecting teammate...");
+      message.ai_teammate = detectTeammate(plainText);
+      console.log("Detected teammate:", message.ai_teammate);
+    }
+
+    const voiceToUse = getVoiceForTeammate(message.ai_teammate?.toLocaleLowerCase());
+    setSelectedVoice(voiceToUse);
+    setSelectedMessage(message);
+    console.log(message)
+    // speak(plainText, {
+    //   voice: voiceToUse,
+    //   rate,
+    //   onEnd: () => {
+    //     setMessages(prevMessages =>
+    //       prevMessages.map(msg =>
+    //         msg.id === message.id ? { ...msg, spoken: true } : msg
+    //       )
+    //     );
+    //   }
+    // });
+  };
+
+  useEffect(() => {
+    if (!selectedVoice || !selecetedMessage) return;
+
+    console.log("Speaking message:", selecetedMessage);
+    console.log(selectedVoice.name)
+
+    // const utterance = new SpeechSynthesisUtterance(stripMarkdown(selecetedMessage.text));
+    const name = (selecetedMessage?.ai_teammate ?? "system").toLocaleLowerCase() as keyof typeof AI_TEAMMATES;
+    const voice = voices.find(v => v.name === AI_TEAMMATES[name]?.voice);
+    console.log(`found voice: `, voice)
+    // utterance.voice = voice;
+    // window.speechSynthesis.cancel(); // Always cancel before speaking again
+    // window.speechSynthesis.speak(utterance);
+    // speakMessage(selecetedMessage);
+    speak(stripMarkdown(selecetedMessage.text), {
+      voice: voice,
       rate,
       onEnd: () => {
-        // Mark the message as spoken
         setMessages(prevMessages =>
           prevMessages.map(msg =>
-            msg.id === message.id ? { ...msg, spoken: true } : msg
+            msg.id === selecetedMessage.id ? { ...msg, spoken: true } : msg
           )
         );
       }
     });
-  };
+  }, [selectedVoice, selecetedMessage]);
 
   return (
     <div className="flex flex-col h-full">
@@ -331,24 +443,74 @@ export default function MessageList() {
                     ? message.spoken ? 'var(--primary-dark)' : 'var(--primary)'
                     : 'var(--primary)'
                 }}
-                className={`p-4 hover:opacity-90 ${
-                  message.role === 'assistant'
-                    ? message.spoken ? 'border-l-4 pl-3' : ''
-                    : 'border-r-4 pr-3'
-                }`}
+                className={`p-4 hover:opacity-90 ${message.role === 'assistant'
+                  ? message.spoken ? 'border-l-4 pl-3' : ''
+                  : 'border-r-4 pr-3'
+                  }`}
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="flex items-center mb-1">
-                      <span
-                        style={{
-                          backgroundColor: message.role === 'assistant' ? 'var(--primary-light)' : 'var(--primary-light)',
-                          color: message.role === 'assistant' ? 'var(--primary-dark)' : 'var(--primary-dark)'
-                        }}
-                        className="text-xs font-medium px-2 py-1 rounded-full"
-                      >
-                        {message.role === 'assistant' ? 'Assistant' : 'You'}
-                      </span>
+                    <div className="flex items-center mb-2">
+                      {message.role === 'assistant' && message.ai_teammate ? (
+                        // Show AI teammate info if available
+                        (() => {
+                          const teammateInfo = getTeammateInfo(message.ai_teammate);
+                          return teammateInfo ? (
+                            <div className="flex items-center space-x-2">
+                              <img
+                                src={teammateInfo.avatarUrl}
+                                alt={teammateInfo.fullName}
+                                className="w-8 h-8 rounded-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to a default avatar if image fails to load
+                                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=150&h=150&fit=crop&crop=face';
+                                }}
+                              />
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <span
+                                    style={{
+                                      backgroundColor: 'var(--primary-light)',
+                                      color: 'var(--primary-dark)'
+                                    }}
+                                    className="text-xs font-medium px-2 py-1 rounded-full"
+                                  >
+                                    {teammateInfo.fullName}
+                                  </span>
+                                  <span
+                                    style={{ color: 'var(--text-light)' }}
+                                    className="text-xs"
+                                  >
+                                    {teammateInfo.jobTitle}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            // Fallback if teammate info not found
+                            <span
+                              style={{
+                                backgroundColor: 'var(--primary-light)',
+                                color: 'var(--primary-dark)'
+                              }}
+                              className="text-xs font-medium px-2 py-1 rounded-full"
+                            >
+                              Assistant ({message.ai_teammate})
+                            </span>
+                          );
+                        })()
+                      ) : (
+                        // Default display for user messages or assistant without ai_teammate
+                        <span
+                          style={{
+                            backgroundColor: message.role === 'assistant' ? 'var(--primary-light)' : 'var(--primary-light)',
+                            color: message.role === 'assistant' ? 'var(--primary-dark)' : 'var(--primary-dark)'
+                          }}
+                          className="text-xs font-medium px-2 py-1 rounded-full"
+                        >
+                          {message.role === 'assistant' ? 'Assistant' : 'You'}
+                        </span>
+                      )}
                     </div>
                     <div style={{ color: 'var(--text-dark)' }} className="font-medium prose prose-sm max-w-none">
                       <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
@@ -367,6 +529,15 @@ export default function MessageList() {
                           Spoken
                         </span>
                       )}
+                      {/* Show AI teammate voice info */}
+                      {message.role === 'assistant' && message.ai_teammate && (() => {
+                        const teammateInfo = getTeammateInfo(message.ai_teammate);
+                        return teammateInfo ? (
+                          <span style={{ color: 'var(--primary)' }} className="ml-2 text-xs flex items-center font-medium">
+                            🤖 Voice: {teammateInfo.voice}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   {message.role === 'assistant' && (
@@ -459,9 +630,8 @@ export default function MessageList() {
               backgroundColor: 'var(--primary)',
               color: 'white'
             }}
-            className={`px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-              sendingMessage || isListening || !userInput.trim() ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className={`px-4 py-2 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 ${sendingMessage || isListening || !userInput.trim() ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             disabled={sendingMessage || isListening || !userInput.trim()}
           >
             {sendingMessage ? (
